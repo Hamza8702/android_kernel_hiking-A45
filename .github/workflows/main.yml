@@ -40,7 +40,7 @@ jobs:
           make -j$(nproc --all) O=out \
             ARCH=arm64 \
             CROSS_COMPILE=aarch64-linux-gnu- \
-            sprd_debian_defconfig
+            sprd_qogirl6_defconfig
           
           make -j$(nproc --all) O=out ARCH=arm64 olddefconfig
 
