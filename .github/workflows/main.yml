@@ -37,7 +37,7 @@ jobs:
 
       - name: Configure Kernel
         run: |
-          make -j$(nproc --all) O=out \
+          CCACHE_DISABLE=1 make -j$(nproc --all) O=out \
             ARCH=arm64 \
             CROSS_COMPILE=aarch64-linux-gnu- \
             sprd_debian_defconfig
@@ -46,7 +46,7 @@ jobs:
 
       - name: Compile Kernel
         run: |
-          make -j$(nproc --all) O=out \
+          CCACHE_DISABLE=1 make -j$(nproc --all) O=out \
             ARCH=arm64 \
             CC="ccache" \
             CROSS_COMPILE=aarch64-linux-gnu- \
