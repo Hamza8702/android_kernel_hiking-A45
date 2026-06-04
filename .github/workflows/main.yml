@@ -18,7 +18,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             bc build-essential flex bison git-core libssl-dev \
-            libelf-dev clang-17 llvm-17 lld-17 libncurses-dev \
+            libelf-dev clang-20 llvm-20 lld-20 libncurses-dev \
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
             python3-minimal zip ccache xxd
 
@@ -34,13 +34,11 @@ jobs:
         run: |
           mkdir -p out
           ccache -M 25G
-          echo "/usr/lib/llvm-17/bin" >> $GITHUB_PATH
 
       - name: Configure Kernel
         run: |
           make -j$(nproc --all) O=out \
             ARCH=arm64 \
-            CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
             sprd_debian_defconfig
           
@@ -50,7 +48,7 @@ jobs:
         run: |
           make -j$(nproc --all) O=out \
             ARCH=arm64 \
-            CC="ccache clang" \
+            CC="ccache" \
             CROSS_COMPILE=aarch64-linux-gnu- \
 
       - name: Archive Boot Assets
@@ -64,5 +62,5 @@ jobs:
       - name: Upload UEFI Assets
         uses: actions/upload-artifact@v4
         with:
-          name: Miatoll-UEFI-Kernel-Assets
-          path: miatoll-uefi-assets.zip
+          name: Hiking-A45-Kernel
+          path: Hiking-A45.zip
