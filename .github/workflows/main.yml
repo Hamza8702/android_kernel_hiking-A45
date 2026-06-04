@@ -48,7 +48,6 @@ jobs:
         run: |
           make -j$(nproc --all) O=out \
             ARCH=arm64 \
-            CC="ccache" \
             CROSS_COMPILE=aarch64-linux-gnu- \
 
       - name: Archive Boot Assets
