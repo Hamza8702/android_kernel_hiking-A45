@@ -42,7 +42,7 @@ jobs:
             ARCH=arm64 \
             CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
-            SPRD-Debian_defconfig
+            sprd_debian_defconfig
           
           make -j$(nproc --all) O=out ARCH=arm64 olddefconfig
 
