@@ -1,0 +1,59 @@
+name: Kernel Build Automation
+
+on:
+  push:
+    branches: [ "main", "master" ] # Hangi branch'e push atılınca çalışacağını buraya yazabilirsin
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Bu seçenek, derlemeyi GitHub üzerinden manuel olarak başlatmanı sağlar
+
+jobs:
+  build-kernel:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Depoyu (Repository) GitHub sunucusuna çekiyoruz
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Derleme için gerekli paketleri ve LLVM/Clang araçlarını kuruyoruz
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib \
+          gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev \
+          liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush \
+          rsync schedtool squashfs-tools xsltproc zip zlib1g-dev clang lld llvm
+
+      # 3. Betiğin çalışması için şart koştuğun setup.env dosyasını oluşturuyoruz
+      # Eğer bu dosyanın içeriği özelse veya değişkenler içeriyorsa burayı düzenleyebilirsin
+      - name: Create setup.env
+        run: |
+          echo "# Setup Environment Variables" > setup.env
+          echo "export ARCH=arm64" >> setup.env
+          # Gerekli diğer export işlemlerini buraya ekleyebilirsin.
+
+      # 4. build.sh dosyasına çalıştırma yetkisi veriyoruz
+      - name: Make build.sh Executable
+        run: chmod +x build.sh
+
+      # 5. Kernel Yapılandırmasını Seçiyoruz (Örn: config-dev veya config-stock)
+      - name: Configure Kernel
+        run: ./build.sh config-dev
+
+      # 6. Derleme (Compile) işlemini başlatıyoruz
+      - name: Compile Kernel
+        run: ./build.sh compile
+
+      # 7. Device Tree (dtc) derlemesini yapıyoruz
+      - name: Compile DTBs
+        run: ./build.sh dtc
+
+      # 8. Çıkan sonuçları (out klasörünü ve logları) GitHub üzerinden indirilebilir yapıyoruz
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-build-output
+          path: |
+            out/
+            kernel_log.log
