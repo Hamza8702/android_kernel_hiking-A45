@@ -1,0 +1,66 @@
+name: Kernel Build Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # GitHub arayüzünden manuel olarak başlatabilmenizi sağlar.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Depodaki kodları GitHub sunucusuna çekiyoruz
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Android Kernel derlemesi için gerekli paketleri ve LLVM/Clang araçlarını kuruyoruz
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib \
+          gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev \
+          liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush \
+          rsync schedtool squashfs-tools xsltproc zip zlib1g-dev clang lld llvm
+
+      # 3. Betiğin çalışmak için zorunlu kıldığı 'setup.env' dosyasını oluşturuyoruz
+      - name: Create setup.env File
+        run: |
+          echo "# Environment setup for kernel compilation" > setup.env
+          echo "export ARCH=arm64" >> setup.env
+          # Eğer bu dosya içine özel bir toolchain yolu (PATH) eklemen gerekirse buraya yazabilirsin.
+
+      # 4. build.sh dosyasına çalıştırma yetkisi veriyoruz
+      - name: Grant Execute Permission to Script
+        run: chmod +x build.sh
+
+      # 5. Temiz bir başlangıç için önce 'clean' komutunu çalıştırıyoruz
+      - name: Clean Previous Builds
+        run: ./build.sh clean
+
+      # 6. Kernel yapılandırmasını yüklüyoruz (Varsayılan olarak dev sürümünü seçtim, dilersen değiştirebilirsin)
+      - name: Configure Kernel Defconfig
+        run: ./build.sh config-dev
+
+      # 7. Çıktı klasörünü elle oluşturuyoruz (Log dosyasının yazılabilmesi için)
+      - name: Prepare Output Directory
+        run: mkdir -p out
+
+      # 8. Ana derleme (Compile) işlemini başlatıyoruz
+      - name: Compile Kernel
+        run: ./build.sh compile
+
+      # 9. Device Tree (dtbs) derlemesini gerçekleştiriyoruz
+      - name: Compile Device Tree (DTC)
+        run: ./build.sh dtc
+
+      # 10. Derlenen dosyaları ve logları indirilebilir bir ZIP haline getiriyoruz
+      - name: Upload Compiled Kernel and Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-kernel-output
+          path: |
+            out/
+            kernel_log.log
